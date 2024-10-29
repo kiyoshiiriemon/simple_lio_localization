@@ -47,3 +47,11 @@ target_link_libraries(test_simple_lio_localization
     Eigen3::Eigen
     small_gicp
 )
+
+install(TARGETS simple_lio_localization
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+
