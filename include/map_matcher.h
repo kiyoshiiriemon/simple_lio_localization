@@ -28,6 +28,7 @@ public:
 
     bool loadMap(const std::string& map_file);
     bool match(const PointCloudPCL& pc, const Pose3d& lio_pose, const Pose3d& pose_guess, Pose3d& out_map_pose);
+    bool match(const std::vector<PointCloudPCL>& pc_vec, const std::vector<Pose3d>& lio_pose_vec, const Pose3d& pose_guess, Pose3d& out_map_pose);
 private:
     Map map_;
 

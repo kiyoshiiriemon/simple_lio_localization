@@ -24,14 +24,28 @@ void SimpleLIOLoc::setInitialPose(const Pose3d& initial_pose)
 
 void SimpleLIOLoc::update(const PointCloudPCL& pc_local, const Pose3d& lio_pose)
 {
-    Pose3d map_pose;
-    // todo: accumulate
-    Pose3d pose_guess = odom_to_map_;
-    if (map_matcher_.match(pc_local, lio_pose, pose_guess, map_pose)) {
-        // success
-        odom_to_map_ = map_pose;
+    pc_buffer_.push_back(pc_local);
+    odom_buffer_.push_back(lio_pose);
+
+    if (pc_buffer_.size() < params_.update_interval) {
+        std::cerr << "accumulating points" << std::endl;
+    } else {
+        Pose3d map_pose;
+        Pose3d pose_guess = odom_to_map_;
+        //if (map_matcher_.match(pc_local, lio_pose, pose_guess, map_pose)) {
+        if (map_matcher_.match(pc_buffer_, odom_buffer_, pose_guess, map_pose)) {
+            // success
+            odom_to_map_ = map_pose;
+        }
+        pc_buffer_.clear();
+        odom_buffer_.clear();
     }
     lio_pose_ = lio_pose;
+}
+
+void SimpleLIOLoc::setParams(const Params& params)
+{
+    params_ = params;
 }
 
 Eigen::Isometry3d SimpleLIOLoc::getPose()
