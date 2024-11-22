@@ -45,7 +45,7 @@ bool MapMatcher::match(const PointCloudPCL& pc_local, const Pose3d& lio_pose, co
         out_map_pose = result.T_target_source;
         std::cout << "ICP converged: " << result.T_target_source.translation().transpose() << std::endl;
     } else {
-        std::cout << "ICP not converged" << std::endl;
+        std::cout << "ICP NOT converged" << std::endl;
     }
 
     return result.converged;
@@ -76,7 +76,7 @@ bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vect
         out_map_pose = result.T_target_source;
         std::cout << "ICP converged: " << result.T_target_source.translation().transpose() << std::endl;
     } else {
-        std::cout << "ICP not converged" << std::endl;
+        std::cout << "ICP NOT converged" << std::endl;
     }
 
     return result.converged;

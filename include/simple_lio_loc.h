@@ -1,6 +1,10 @@
 #ifndef SIMPLE_LIO_LOCALIZATION_SIMPLE_LIO_LOC_H
 #define SIMPLE_LIO_LOCALIZATION_SIMPLE_LIO_LOC_H
 
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "loc_types.h"
 #include "map_matcher.h"
 
@@ -45,6 +49,20 @@ private:
     std::vector<PointCloudPCL> pc_buffer_;
     std::vector<Pose3d> odom_buffer_;
     Params params_;
+
+    void registration_worker();
+    struct RegistrationData
+    {
+        std::vector<PointCloudPCL> pc_buffer;
+        std::vector<Pose3d> odom_buffer;
+    } registration_data_;
+    bool registration_working_ = true;
+    std::thread registration_thread_;
+    std::mutex registration_mutex_;
+    std::mutex odom_to_map_mutex_;
+    std::condition_variable registration_cv_;
+    std::queue<RegistrationData> registration_queue_;
+    bool asynchronous_registration_ = true;
 };
 
 }

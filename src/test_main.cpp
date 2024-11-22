@@ -42,7 +42,7 @@ std::vector<Eigen::Isometry3d> read_rosbag_odom_csv(const std::string& filename)
         double qz = std::stod(values[10]);
         double qw = std::stod(values[11]);
 
-        std::cout << "x: " << x << ", y: " << y << ", z: " << z << ", qx: " << qx << ", qy: " << qy << ", qz: " << qz << ", qw: " << qw << std::endl;
+        //std::cout << "x: " << x << ", y: " << y << ", z: " << z << ", qx: " << qx << ", qy: " << qy << ", qz: " << qz << ", qw: " << qw << std::endl;
 
         Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
         pose.translation() = Eigen::Vector3d(x, y, z);
@@ -67,6 +67,9 @@ int main(int argc, char** argv)
     init_pose_guess.translation() = Eigen::Vector3d(0.0, 0.0, 0.4);
     init_pose_guess.rotate(Eigen::AngleAxisd(0.3, Eigen::Vector3d(0, 1, 0)));
     std::cout << "init_pose_guess: " << isometry3d_to_string(init_pose_guess) << std::endl;
+    simple_lio_localization::Params params;
+    params.update_interval = 4;
+    loc.setParams(params);
     loc.setInitialPose(init_pose_guess);
 
     // read pcd files
