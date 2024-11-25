@@ -14,6 +14,7 @@ namespace simple_lio_localization
 struct Params
 {
     int update_interval = 1;
+    double min_update_distance = 0;
 };
 
 class SimpleLIOLoc
@@ -39,6 +40,7 @@ public:
     Eigen::Isometry3d getPose();
     Eigen::Isometry3d getLIOToMap();
     LocalizationStatus getStatus();
+    void terminate();
 
 private:
     MapMatcher map_matcher_;
@@ -63,6 +65,7 @@ private:
     std::condition_variable registration_cv_;
     std::queue<RegistrationData> registration_queue_;
     bool asynchronous_registration_ = true;
+    double distance_since_last_update_ = 0.0;
 };
 
 }

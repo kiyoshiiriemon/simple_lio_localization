@@ -31,8 +31,9 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc_local, const Pose3d& lio_pose)
 {
     pc_buffer_.push_back(pc_local);
     odom_buffer_.push_back(lio_pose);
+    distance_since_last_update_ += (lio_pose_.translation() - lio_pose.translation()).norm();
 
-    if (pc_buffer_.size() < params_.update_interval) {
+    if (pc_buffer_.size() < params_.update_interval || distance_since_last_update_ < params_.min_update_distance) {
         std::cerr << "accumulating points [" << pc_buffer_.size() << "/" << params_.update_interval << "]" << std::endl;
     } else {
         Pose3d map_pose;
@@ -57,6 +58,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc_local, const Pose3d& lio_pose)
         }
         pc_buffer_.clear();
         odom_buffer_.clear();
+        distance_since_last_update_ = 0.0;
     }
     lio_pose_ = lio_pose;
 }
@@ -88,9 +90,7 @@ void SimpleLIOLoc::registration_worker() {
         RegistrationData data;
         {
             std::unique_lock<std::mutex> lock(registration_mutex_);
-            registration_cv_.wait(lock, [this]() {
-                return !registration_queue_.empty();
-            });
+            registration_cv_.wait(lock);
             if (!registration_working_ || registration_queue_.empty()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 continue;
@@ -112,6 +112,11 @@ void SimpleLIOLoc::registration_worker() {
         std::cerr << "registration worker: done registration " << elapsed << "ms" << std::endl;
     }
     std::cerr << "registration worker stopped" << std::endl;
+}
+
+void SimpleLIOLoc::terminate() {
+    registration_working_ = false;
+    registration_cv_.notify_one();
 }
 
 }
