@@ -13,8 +13,16 @@ namespace simple_lio_localization
 
 struct Params
 {
-    int update_interval = 1;
+    int registration_interval = 1;
     double min_update_distance = 0;
+};
+
+struct RegistrationResult
+{
+    bool converged;
+    Eigen::Isometry3d trans;
+    PointCloudPCL pc_registered;
+    double elapsed_sec;
 };
 
 class SimpleLIOLoc
@@ -37,6 +45,8 @@ public:
     void setInitialPose(const Pose3d& initial_pose);
     void update(const PointCloudPCL& pc_local, const Pose3d& lio_pose);
     void setParams(const Params &params);
+    void setRegistrationDoneCallback(std::function<void(const RegistrationResult &pose)> callback);
+    void startAsynchronousRegistration();
     Eigen::Isometry3d getPose();
     Eigen::Isometry3d getLIOToMap();
     LocalizationStatus getStatus();
@@ -51,6 +61,7 @@ private:
     std::vector<PointCloudPCL> pc_buffer_;
     std::vector<Pose3d> odom_buffer_;
     Params params_;
+    std::function<void(const RegistrationResult &)> registration_done_callback_ = nullptr;
 
     void registration_worker();
     struct RegistrationData
@@ -64,7 +75,7 @@ private:
     std::mutex odom_to_map_mutex_;
     std::condition_variable registration_cv_;
     std::queue<RegistrationData> registration_queue_;
-    bool asynchronous_registration_ = true;
+    bool asynchronous_registration_ = false;
     double distance_since_last_update_ = 0.0;
 };
 

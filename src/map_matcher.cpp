@@ -51,7 +51,7 @@ bool MapMatcher::match(const PointCloudPCL& pc_local, const Pose3d& lio_pose, co
     return result.converged;
 }
 
-bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vector<Pose3d>& lio_pose_vec, const Pose3d& pose_guess, Pose3d& out_map_pose)
+bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vector<Pose3d>& lio_pose_vec, const Pose3d& pose_guess, Pose3d& out_map_pose, PointCloudPCL& out_registered_cloud)
 {
     PointCloudPCL lio_registered_merge;
     for (size_t i = 0; i < pc_vec.size(); i++) {
@@ -75,6 +75,7 @@ bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vect
     if (result.converged) {
         out_map_pose = result.T_target_source;
         std::cout << "ICP converged: " << result.T_target_source.translation().transpose() << std::endl;
+        pcl::transformPointCloud(lio_registered_merge, out_registered_cloud, result.T_target_source.matrix().cast<float>());
     } else {
         std::cout << "ICP NOT converged" << std::endl;
     }
