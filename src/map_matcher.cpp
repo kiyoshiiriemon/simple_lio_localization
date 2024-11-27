@@ -26,41 +26,16 @@ bool MapMatcher::loadMap(const std::string& map_file)
     return map_.load_from_pcd(map_file);
 }
 
-bool MapMatcher::match(const PointCloudPCL& pc_local, const Pose3d& lio_pose, const Pose3d& pose_guess, Pose3d& out_map_pose)
+bool MapMatcher::match_local(const PointCloudPCL& pc_local, const Pose3d& lio_pose, const Pose3d& pose_guess, Pose3d& out_map_pose, PointCloudPCL& out_registered_cloud)
 {
     PointCloudPCL pc_registered;
     pcl::transformPointCloud(pc_local, pc_registered, lio_pose.matrix().cast<float>());
-    std::vector<Eigen::Vector4f> scan_pts = pcl_to_vecarray(pc_registered);
-    auto [cloud, tree] = small_gicp::preprocess_points(scan_pts, DownsamplingResolution, NumNeighbors, NumThreads);
-
-    RegistrationSetting setting;
-    setting.type = RegistrationSetting::GICP;
-    setting.voxel_resolution = DownsamplingResolution;
-    setting.num_threads = NumThreads;
-    setting.max_correspondence_distance = 1.0;
-
-    RegistrationResult result = small_gicp::align(*map_.map_cloud_, *cloud, *map_.map_tree_, pose_guess, setting);
-
-    if (result.converged) {
-        out_map_pose = result.T_target_source;
-        std::cout << "ICP converged: " << result.T_target_source.translation().transpose() << std::endl;
-    } else {
-        std::cout << "ICP NOT converged" << std::endl;
-    }
-
-    return result.converged;
+    return match_lioframe(pc_registered, pose_guess, out_map_pose, out_registered_cloud);
 }
 
-bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vector<Pose3d>& lio_pose_vec, const Pose3d& pose_guess, Pose3d& out_map_pose, PointCloudPCL& out_registered_cloud)
+bool MapMatcher::match_lioframe(const PointCloudPCL& pc_lioframe, const Pose3d& pose_guess, Pose3d& out_map_pose, PointCloudPCL& out_registered_cloud)
 {
-    PointCloudPCL lio_registered_merge;
-    for (size_t i = 0; i < pc_vec.size(); i++) {
-        PointCloudPCL lio_registered;
-        pcl::transformPointCloud(pc_vec[i], lio_registered, lio_pose_vec[i].matrix().cast<float>());
-        lio_registered_merge += lio_registered;
-    }
-
-    std::vector<Eigen::Vector4f> scan_pts = pcl_to_vecarray(lio_registered_merge);
+    std::vector<Eigen::Vector4f> scan_pts = pcl_to_vecarray(pc_lioframe);
     auto [cloud, tree] = small_gicp::preprocess_points(scan_pts, DownsamplingResolution, NumNeighbors, NumThreads);
 
     RegistrationSetting setting;
@@ -69,14 +44,14 @@ bool MapMatcher::match(const std::vector<PointCloudPCL>& pc_vec, const std::vect
     setting.num_threads = NumThreads;
     setting.max_correspondence_distance = 1.0;
 
-    std::cout << "cloud size: " << cloud->size() << std::endl;
     RegistrationResult result = small_gicp::align(*map_.map_cloud_, *cloud, *map_.map_tree_, pose_guess, setting);
 
     if (result.converged) {
         out_map_pose = result.T_target_source;
+        pcl::transformPointCloud(pc_lioframe, out_registered_cloud, result.T_target_source.matrix().cast<float>());
         std::cout << "ICP converged: " << result.T_target_source.translation().transpose() << std::endl;
-        pcl::transformPointCloud(lio_registered_merge, out_registered_cloud, result.T_target_source.matrix().cast<float>());
     } else {
+        pcl::transformPointCloud(pc_lioframe, out_registered_cloud, pose_guess.matrix().cast<float>());
         std::cout << "ICP NOT converged" << std::endl;
     }
 

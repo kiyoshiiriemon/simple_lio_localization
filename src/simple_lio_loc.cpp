@@ -1,7 +1,21 @@
 #include "simple_lio_loc.h"
+#include <pcl/common/transforms.h>
 
 namespace simple_lio_localization
 {
+
+static PointCloudPCL merge_pointclouds(const std::vector<PointCloudPCL>& pc_buffer, const std::vector<Pose3d>& odom_buffer)
+{
+    PointCloudPCL merged_pc;
+    for (size_t i = 0; i < pc_buffer.size(); i++) {
+        PointCloudPCL pc_local = pc_buffer[i];
+        Pose3d lio_pose = odom_buffer[i];
+        PointCloudPCL pc_global;
+        pcl::transformPointCloud(pc_local, pc_global, lio_pose.matrix().cast<float>());
+        merged_pc += pc_global;
+    }
+    return merged_pc;
+}
 
 SimpleLIOLoc::SimpleLIOLoc()
 {
@@ -57,10 +71,11 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc_local, const Pose3d& lio_pose)
         } else {
             RegistrationResult result;
 
+            PointCloudPCL merged_pc = merge_pointclouds(pc_buffer_, odom_buffer_);
             std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
-            result.converged = map_matcher_.match(pc_buffer_, odom_buffer_, pose_guess, map_pose, result.pc_registered);
+            result.converged = map_matcher_.match_lioframe(merged_pc, pose_guess, map_pose, result.pc_registered);
             std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
-            result.elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.;
+            result.elapsed_sec = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() / 1e6;
             if (result.converged) {
                 // success
                 odom_to_map_ = map_pose;
@@ -122,13 +137,14 @@ void SimpleLIOLoc::registration_worker() {
 
         std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
         RegistrationResult result;
-        result.converged = map_matcher_.match(data.pc_buffer, data.odom_buffer, pose_guess, map_pose, result.pc_registered);
+        auto merged_pc = merge_pointclouds(data.pc_buffer, data.odom_buffer);
+        result.converged = map_matcher_.match_lioframe(merged_pc, pose_guess, map_pose, result.pc_registered);
         if (result.converged) {
             std::lock_guard<std::mutex> lock(odom_to_map_mutex_);
             odom_to_map_ = map_pose;
         }
         std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
-        result.elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.;
+        result.elapsed_sec = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() / 1e6;
         if (registration_done_callback_) {
             registration_done_callback_(result);
         }
