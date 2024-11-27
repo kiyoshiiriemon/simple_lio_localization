@@ -60,7 +60,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc_local, const Pose3d& lio_pose)
             std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
             result.converged = map_matcher_.match(pc_buffer_, odom_buffer_, pose_guess, map_pose, result.pc_registered);
             std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
-            result.elapsed_sec = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
+            result.elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.;
             if (result.converged) {
                 // success
                 odom_to_map_ = map_pose;
@@ -121,15 +121,14 @@ void SimpleLIOLoc::registration_worker() {
         Pose3d pose_guess = odom_to_map_;
 
         std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
-        PointCloudPCL::Ptr registered_cloud(new PointCloudPCL);
         RegistrationResult result;
-        result.converged = map_matcher_.match(data.pc_buffer, data.odom_buffer, pose_guess, map_pose, *registered_cloud);
+        result.converged = map_matcher_.match(data.pc_buffer, data.odom_buffer, pose_guess, map_pose, result.pc_registered);
         if (result.converged) {
             std::lock_guard<std::mutex> lock(odom_to_map_mutex_);
             odom_to_map_ = map_pose;
         }
         std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
-        result.elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count();
+        result.elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0).count() / 1000.;
         if (registration_done_callback_) {
             registration_done_callback_(result);
         }
