@@ -44,7 +44,12 @@ bool MapMatcher::match_lioframe(const PointCloudPCL& pc_lioframe, const Pose3d& 
     setting.num_threads = NumThreads;
     setting.max_correspondence_distance = 1.0;
 
-    RegistrationResult result = small_gicp::align(*map_.map_cloud_, *cloud, *map_.map_tree_, pose_guess, setting);
+    RegistrationResult result;
+    if (setting.type == RegistrationSetting::VGICP) {
+        result = small_gicp::align(*map_.map_voxelmap_, *cloud, pose_guess, setting);
+    } else {
+        result = small_gicp::align(*map_.map_cloud_, *cloud, *map_.map_tree_, pose_guess, setting);
+    }
 
     if (result.converged) {
         out_map_pose = result.T_target_source;
@@ -69,6 +74,7 @@ bool Map::load_from_pcd(const std::string& pcd_file) {
     auto [cloud, tree] = small_gicp::preprocess_points(pts_, DownsamplingResolution, NumNeighbors, NumThreads);
     map_cloud_ = cloud;
     map_tree_ = tree;
+    map_voxelmap_ = small_gicp::create_gaussian_voxelmap(*cloud, DownsamplingResolution);
 
     return true;
 }

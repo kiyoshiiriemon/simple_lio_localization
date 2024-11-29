@@ -14,6 +14,7 @@ public:
     std::vector<Eigen::Vector4f> pts_;
     std::shared_ptr<small_gicp::KdTree<small_gicp::PointCloud>> map_tree_ = nullptr;
     std::shared_ptr<small_gicp::PointCloud> map_cloud_ = nullptr;
+    std::shared_ptr<small_gicp::GaussianVoxelMap> map_voxelmap_ = nullptr;
 
     double DownsamplingResolution = 0.25;
     int NumNeighbors = 10;

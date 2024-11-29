@@ -38,6 +38,17 @@ void SimpleLIOLoc::setInitialPose(const Pose3d& initial_pose)
     odom_to_map_ = initial_pose;
 }
 
+bool SimpleLIOLoc::initializeByRegistration(const PointCloudPCL &pc_local, const Pose3d &initial_pose_guess) {
+    Pose3d map_pose;
+    RegistrationResult result;
+    result.converged = map_matcher_.match_local(pc_local, initial_pose_guess, initial_pose_guess, map_pose, result.pc_registered);
+    if (result.converged) {
+        odom_to_map_ = map_pose;
+        initial_pose_ = map_pose;
+    }
+    return result.converged;
+}
+
 void SimpleLIOLoc::startAsynchronousRegistration()
 {
     registration_working_ = true;
