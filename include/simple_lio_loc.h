@@ -25,6 +25,13 @@ struct RegistrationResult
     double elapsed_sec;
 };
 
+enum class CoordinateFrame
+{
+    LOCAL,
+    LIO,
+    MAP,
+};
+
 class SimpleLIOLoc
 {
 public:
@@ -44,7 +51,7 @@ public:
     bool loadMap(const std::string& map_file);
     void setInitialPose(const Pose3d& initial_pose);
     bool initializeByRegistration(const PointCloudPCL& pc_local, const Pose3d& initial_pose_guess);
-    void update(const PointCloudPCL& pc_local, const Pose3d& lio_pose);
+    void update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame=CoordinateFrame::LOCAL);
     void setParams(const Params &params);
     void setRegistrationDoneCallback(std::function<void(const RegistrationResult &pose)> callback);
     void startAsynchronousRegistration();
