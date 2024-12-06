@@ -15,6 +15,7 @@ struct Params
 {
     int registration_interval = 1;
     double min_update_distance = 0;
+    int max_accumulate_frames = 100;
 };
 
 struct RegistrationResult

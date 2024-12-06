@@ -15,6 +15,7 @@ static PointCloudPCL merge_pointclouds(const std::vector<PointCloudPCL>& pc_buff
 
 SimpleLIOLoc::SimpleLIOLoc()
 {
+    lio_pose_ = Eigen::Isometry3d::Identity();
 }
 
 SimpleLIOLoc::~SimpleLIOLoc()
@@ -32,6 +33,7 @@ void SimpleLIOLoc::setInitialPose(const Pose3d& initial_pose)
 {
     initial_pose_ = initial_pose;
     odom_to_map_ = initial_pose;
+    distance_since_last_update_ = 0.0;
 }
 
 bool SimpleLIOLoc::initializeByRegistration(const PointCloudPCL &pc_local, const Pose3d &initial_pose_guess) {
@@ -54,6 +56,12 @@ void SimpleLIOLoc::startAsynchronousRegistration()
 
 void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame)
 {
+    if (odom_buffer_.size() > params_.max_accumulate_frames) {
+        odom_buffer_.clear();
+        pc_buffer_.clear();
+        distance_since_last_update_ = 0.0;
+        std::cerr << "reset registration buffer" << std::endl;
+    }
     if (frame == CoordinateFrame::LOCAL) {
         PointCloudPCL pc_lio;
         pcl::transformPointCloud(pc, pc_lio, lio_pose.matrix().cast<float>());
@@ -67,7 +75,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
     distance_since_last_update_ += (lio_pose_.translation() - lio_pose.translation()).norm();
 
     if (pc_buffer_.size() < params_.registration_interval || distance_since_last_update_ < params_.min_update_distance) {
-        std::cerr << "accumulating points [" << pc_buffer_.size() << "/" << params_.registration_interval << "]" << std::endl;
+        std::cerr << "accumulating points [" << pc_buffer_.size() << "/" << params_.registration_interval << "] " << distance_since_last_update_ << std::endl;
     } else {
         Pose3d map_pose;
         Pose3d pose_guess = getLIOToMap();
