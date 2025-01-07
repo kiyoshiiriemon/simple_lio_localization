@@ -74,8 +74,8 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
     odom_buffer_.push_back(lio_pose);
     distance_since_last_update_ += (lio_pose_.translation() - lio_pose.translation()).norm();
 
-    if (pc_buffer_.size() < params_.registration_interval || distance_since_last_update_ < params_.min_update_distance) {
-        std::cerr << "accumulating points [" << pc_buffer_.size() << "/" << params_.registration_interval << "] " << distance_since_last_update_ << std::endl;
+    if (pc_buffer_.size() < params_.frames_accumulate || distance_since_last_update_ < params_.min_registration_distance) {
+        std::cerr << "accumulating points [" << pc_buffer_.size() << "/" << params_.frames_accumulate << "] " << distance_since_last_update_ << std::endl;
     } else {
         Pose3d map_pose;
         Pose3d pose_guess = getLIOToMap();

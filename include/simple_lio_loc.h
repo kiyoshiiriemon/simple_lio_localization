@@ -13,8 +13,8 @@ namespace simple_lio_localization
 
 struct Params
 {
-    int registration_interval = 1;
-    double min_update_distance = 0;
+    int frames_accumulate = 1;
+    double min_registration_distance = 0;
     int max_accumulate_frames = 100;
 };
 

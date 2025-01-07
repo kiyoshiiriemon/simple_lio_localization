@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     init_pose_guess.rotate(Eigen::AngleAxisd(0.3, Eigen::Vector3d(0, 1, 0)));
     std::cout << "init_pose_guess: " << isometry3d_to_string(init_pose_guess) << std::endl;
     simple_lio_localization::Params params;
-    params.registration_interval = 10;
+    params.frames_accumulate = 10;
     loc.setParams(params);
     loc.setInitialPose(init_pose_guess);
 
