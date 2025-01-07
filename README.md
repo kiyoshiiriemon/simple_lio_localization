@@ -16,7 +16,7 @@ Features:
 - Boost
 
 #### Build:
-```
+```bash
 git clone --recursive https://github.com/kiyoshiiriemon/simple_lio_localization/
 cd simple_lio_localization
 cmake -Bbuild .
@@ -25,12 +25,16 @@ cmake --build build
 
 ## API
 ### Constructor
-```SimpleLIOLoc();```
+```cpp
+SimpleLIOLoc();
+```
 
 Initializes the localization system.
 
 ### Load Map
-```bool loadMap(const std::string& map_file);```
+```cpp
+bool loadMap(const std::string& map_file);
+```
 
 Loads a map file for localization.
 
@@ -38,14 +42,18 @@ Loads a map file for localization.
 - map_file: Path to the map file (PointCloud Library PCD file).
 
 ### Set Initial Pose
-```void setInitialPose(const Pose3d& initial_pose);```
+```cpp
+void setInitialPose(const Pose3d& initial_pose);
+```
 
 Sets the initial pose of the system.
 #### Parameters:
 - initial_pose: The starting position and orientation.
 
 ### Update Estimation
-```update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame=CoordinateFrame::LOCAL);```
+```cpp
+update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame=CoordinateFrame::LOCAL);
+```
 
 Updates the estimated position using LIO outputs.
 
@@ -57,21 +65,28 @@ Updates the estimated position using LIO outputs.
    - LIO: LIO frame (for LIO-registered point cloud)
 
 ### Get Current Pose
-```Eigen::Isometry3d getPose();```
+```cpp
+Eigen::Isometry3d getPose();
+```
 
 ### Using Asynchronous Registration
-```void startAsynchronousRegistration();```
+```cpp
+void startAsynchronousRegistration();
+```
+
 #### Description:
 Starts the registration process in a separate thread.
 After calling this function, registration is performed in a non-blocking manner (update() returns immediately).
 
 #### Receiving Registration Done Notification
-```void setRegistrationDoneCallback(std::function<void(const RegistrationResult &pose)> callback);```
+```cpp
+void setRegistrationDoneCallback(std::function<void(const RegistrationResult &pose)> callback);
+```
 
 Registers a callback function that is invoked when the asynchronous registration completes.
 
 Example:
-```
+```cpp
 loc.setRegistrationDoneCallback([](const RegistrationResult& result) {
     if (result.converged) {
         std::cout << "Registration succeeded. Pose: " << result.trans.matrix() << std::endl;
@@ -82,7 +97,9 @@ loc.setRegistrationDoneCallback([](const RegistrationResult& result) {
 ```
 
 ### Set Parameters
-```void setParams(const Params &params);```
+```cpp
+void setParams(const Params &params);
+```
 #### Parameters:
 | Parameter                | Type   | Default | Description                                |
 |--------------------------|--------|---------|--------------------------------------------|
