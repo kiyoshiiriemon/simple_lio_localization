@@ -24,6 +24,7 @@ struct RegistrationResult
     Eigen::Isometry3d trans;
     PointCloudPCL pc_registered;
     double elapsed_sec;
+    double timestamp;
 };
 
 enum class CoordinateFrame
@@ -53,6 +54,7 @@ public:
     void setInitialPose(const Pose3d& initial_pose);
     bool initializeByRegistration(const PointCloudPCL& pc_local, const Pose3d& initial_pose_guess);
     void update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame=CoordinateFrame::LOCAL);
+    void update(const PointCloudPCL& pc, const Pose3d& lio_pose, double timestamp, CoordinateFrame frame=CoordinateFrame::LOCAL);
     void setParams(const Params &params);
     void setRegistrationDoneCallback(std::function<void(const RegistrationResult &pose)> callback);
     void startAsynchronousRegistration();
@@ -69,6 +71,7 @@ private:
     LocalizationStatus status_;
     std::vector<PointCloudPCL> pc_buffer_;
     std::vector<Pose3d> odom_buffer_;
+    std::vector<double> timestamp_buffer_;
     Params params_;
     std::function<void(const RegistrationResult &)> registration_done_callback_ = nullptr;
 
@@ -77,6 +80,7 @@ private:
     {
         std::vector<PointCloudPCL> pc_buffer;
         std::vector<Pose3d> odom_buffer;
+        std::vector<double> timestamp_buffer;
     } registration_data_;
     bool registration_working_ = true;
     std::thread registration_thread_;

@@ -56,9 +56,16 @@ void SimpleLIOLoc::startAsynchronousRegistration()
 
 void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame)
 {
+    double dummy_timestamp = 0.0;
+    update(pc, lio_pose, dummy_timestamp, frame);
+}
+
+void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, double timestamp, CoordinateFrame frame)
+{
     if (odom_buffer_.size() > params_.max_accumulate_frames) {
         odom_buffer_.clear();
         pc_buffer_.clear();
+        timestamp_buffer_.clear();
         distance_since_last_update_ = 0.0;
         std::cerr << "reset registration buffer" << std::endl;
     }
@@ -72,6 +79,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
         assert(false);
     }
     odom_buffer_.push_back(lio_pose);
+    timestamp_buffer_.push_back(timestamp);
     distance_since_last_update_ += (lio_pose_.translation() - lio_pose.translation()).norm();
 
     if (pc_buffer_.size() < params_.frames_accumulate || distance_since_last_update_ < params_.min_registration_distance) {
@@ -83,6 +91,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
             RegistrationData data;
             data.pc_buffer = pc_buffer_;
             data.odom_buffer = odom_buffer_;
+            data.timestamp_buffer = timestamp_buffer_;
             {
                 std::lock_guard<std::mutex> lock(registration_mutex_);
                 if (registration_queue_.size() > 0) {
@@ -93,6 +102,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
             }
         } else {
             RegistrationResult result;
+            result.timestamp = timestamp_buffer_.front();
 
             PointCloudPCL merged_pc = merge_pointclouds(pc_buffer_);
             std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
@@ -110,6 +120,7 @@ void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, Coord
         }
         pc_buffer_.clear();
         odom_buffer_.clear();
+        timestamp_buffer_.clear();
         distance_since_last_update_ = 0.0;
     }
     lio_pose_ = lio_pose;
@@ -160,6 +171,7 @@ void SimpleLIOLoc::registration_worker() {
 
         std::chrono::system_clock::time_point t0 = std::chrono::system_clock::now();
         RegistrationResult result;
+        result.timestamp = data.timestamp_buffer.front();
         auto merged_pc = merge_pointclouds(data.pc_buffer);
         result.converged = map_matcher_.match_lioframe(merged_pc, pose_guess, map_pose, result.pc_registered);
         if (result.converged) {
