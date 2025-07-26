@@ -54,6 +54,11 @@ void SimpleLIOLoc::startAsynchronousRegistration()
     registration_thread_ = std::thread(&SimpleLIOLoc::registration_worker, this);
 }
 
+void SimpleLIOLoc::updateLIO(const Pose3d& lio_pose)
+{
+    lio_pose_ = lio_pose;
+}
+
 void SimpleLIOLoc::update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame)
 {
     double dummy_timestamp = 0.0;

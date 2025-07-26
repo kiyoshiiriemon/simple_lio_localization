@@ -53,6 +53,7 @@ public:
     bool loadMap(const std::string& map_file);
     void setInitialPose(const Pose3d& initial_pose);
     bool initializeByRegistration(const PointCloudPCL& pc_local, const Pose3d& initial_pose_guess);
+    void updateLIO(const Pose3d& lio_pose);
     void update(const PointCloudPCL& pc, const Pose3d& lio_pose, CoordinateFrame frame=CoordinateFrame::LOCAL);
     void update(const PointCloudPCL& pc, const Pose3d& lio_pose, double timestamp, CoordinateFrame frame=CoordinateFrame::LOCAL);
     void setParams(const Params &params);
